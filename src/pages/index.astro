@@ -1,0 +1,80 @@
+---
+import Consent from '../components/Consent.astro';
+import Cta from '../components/Cta.astro';
+import DemoVideo from '../components/DemoVideo.astro';
+import Hero from '../components/Hero.astro';
+import QrDialog from '../components/QrDialog.astro';
+import Screens from '../components/Screens.astro';
+import Turn from '../components/Turn.astro';
+import { COPY, DIRECTIONS } from '../content';
+import Base from '../layouts/Base.astro';
+---
+
+<Base>
+  <main class="page">
+    <Hero />
+    <script is:inline>window.__abApply && window.__abApply();</script>
+
+    <section class="script" aria-label="Разговор с Батей">
+      <Turn>
+        <p class="line line--first">{COPY.intro}</p>
+      </Turn>
+
+      <Turn who="you">
+        <p class="line">{COPY.askHow}</p>
+      </Turn>
+
+      <Turn>
+        <p class="line">{COPY.showDay}</p>
+        <Screens />
+      </Turn>
+
+      <Turn continued>
+        <p class="line">{COPY.missRule}</p>
+        <DemoVideo />
+      </Turn>
+
+      <Turn who="you">
+        <p class="line">{COPY.askStart}</p>
+      </Turn>
+
+      <Turn body="demo" section="demo">
+        <p class="line">{COPY.honestAnswer}</p>
+        <div class="chips" role="group" aria-label="Что стоит на месте">
+          {
+            DIRECTIONS.map((d) => (
+              <button type="button" class="chip" data-direction={d.id} aria-pressed="false">
+                {d.label}
+              </button>
+            ))
+          }
+        </div>
+      </Turn>
+
+      <div class="demo-reply" data-demo-reply aria-live="polite"></div>
+      <template id="tpl-demo-reply">
+        <Turn who="you" class="anim">
+          <p class="line line--picked" data-slot="label"></p>
+        </Turn>
+        <Turn body="reply" class="anim" data-slot="batya" hidden bodyAttrs={{ 'data-slot': 'body' }}>
+          <div class="typing" data-slot="typing">
+            <span class="typing__dot"></span><span class="typing__dot"></span><span class="typing__dot"></span>
+            <span class="sr-only">Батя печатает…</span>
+          </div>
+        </Turn>
+      </template>
+
+      <Turn continued section="cta" class="turn--cta">
+        <Cta />
+      </Turn>
+    </section>
+    <script is:inline>window.__abApply && window.__abApply();</script>
+  </main>
+
+  <QrDialog />
+  <Consent />
+
+  <script>
+    import '../scripts/main';
+  </script>
+</Base>

@@ -1,0 +1,31 @@
+---
+import '@fontsource/onest/400.css';
+import '@fontsource/onest/700.css';
+import StoreBadges from '../components/StoreBadges.astro';
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#111827" />
+    <title>Батя — открываю стор</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main class="go">
+      <p class="go__label">Батя</p>
+      <h1 class="go__title">
+        <span class="go__wait">Открываю магазин приложений…</span>
+        <span class="go__choose">Выбери свой магазин</span>
+      </h1>
+      <StoreBadges />
+    </main>
+    <script>
+      import '../scripts/go';
+    </script>
+  </body>
+</html>

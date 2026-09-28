@@ -1,0 +1,14 @@
+---
+import { CONFIG } from '../config';
+import { COPY } from '../content';
+import StoreBadges from './StoreBadges.astro';
+
+// Без JS кнопка всё равно работает: /go сам разводит по сторам
+const fallbackHref = CONFIG.store.smartLink || '/go';
+---
+
+<div class="cta">
+  <a class="cta__main" href={fallbackHref} data-cta-main data-copy="ctaMain">{COPY.ctaMain}</a>
+  <StoreBadges />
+  <p class="cta__note">{COPY.ctaNote}</p>
+</div>

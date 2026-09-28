@@ -1,0 +1,24 @@
+---
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { storeUrl, type Store } from '../scripts/links';
+
+// Официальные бейджи: положить public/badges/app-store.svg и google-play.svg —
+// подхватятся вместо текстовых кнопок. Ссылки здесь без UTM, их дописывает скрипт на клиенте.
+const badge = (file: string) => (existsSync(join(process.cwd(), 'public', 'badges', file)) ? `/badges/${file}` : null);
+
+const stores: { id: Store; label: string; alt: string; img: string | null }[] = [
+  { id: 'ios', label: 'App Store', alt: 'Загрузите в App Store', img: badge('app-store.svg') },
+  { id: 'android', label: 'Google Play', alt: 'Доступно в Google Play', img: badge('google-play.svg') },
+];
+---
+
+<div class="stores">
+  {
+    stores.map((store) => (
+      <a class:list={['store', { 'store--badge': store.img }]} href={storeUrl(store.id, {}) || '#'} data-store={store.id}>
+        {store.img ? <img src={store.img} alt={store.alt} height="44" /> : store.label}
+      </a>
+    ))
+  }
+</div>

@@ -1,0 +1,36 @@
+---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { SCREEN_SLOTS } from '../content';
+
+// Скрины кладутся в src/assets/screens/ (1.png, 2.png, 3.png — порядок по имени файла).
+// Пока файлов нет, на их месте пустые слоты как в макете.
+const files = import.meta.glob<{ default: ImageMetadata }>('../assets/screens/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+});
+const images = Object.keys(files)
+  .sort()
+  .map((key) => files[key].default);
+---
+
+<div class="screens" data-track-section="screens">
+  {
+    SCREEN_SLOTS.map((slot, i) => (
+      <figure class="screen" data-screen={i + 1}>
+        {images[i] ? (
+          <Picture
+            src={images[i]}
+            alt={slot.alt}
+            class="screen__img"
+            formats={['avif', 'webp']}
+            widths={[240, 360, 480, 720]}
+            sizes="(min-width: 1024px) 240px, 172px"
+            loading="lazy"
+          />
+        ) : (
+          <div class="slot">{slot.placeholder}</div>
+        )}
+      </figure>
+    ))
+  }
+</div>

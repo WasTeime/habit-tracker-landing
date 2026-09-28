@@ -1,0 +1,54 @@
+---
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+// Видео кладётся в public/media/: batya-demo.mp4 (H.264, обязательно), batya-demo.webm (по желанию),
+// batya-demo-poster.jpg или .webp — первый кадр. Пока файла нет, рисуем слот из макета.
+const has = (file: string) => existsSync(join(process.cwd(), 'public', 'media', file));
+const mp4 = has('batya-demo.mp4');
+const webm = has('batya-demo.webm');
+const poster = ['batya-demo-poster.webp', 'batya-demo-poster.jpg'].find(has);
+---
+
+<div class="video" data-track-section="video" data-video data-state="idle">
+  {
+    mp4 || webm ? (
+      <>
+        <video
+          muted
+          playsinline
+          loop
+          preload="metadata"
+          poster={poster ? `/media/${poster}` : undefined}
+          aria-label="Как работает приложение, 30 секунд"
+        >
+          {webm && <source src="/media/batya-demo.webm" type="video/webm" />}
+          {mp4 && <source src="/media/batya-demo.mp4" type="video/mp4" />}
+        </video>
+        <button class="video__play" type="button" data-video-play aria-label="Смотреть видео">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+          </svg>
+        </button>
+        <button class="video__sound" type="button" data-video-sound aria-pressed="false" aria-label="Включить звук">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="video__icon-off">
+            <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" />
+            <path d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="video__icon-on">
+            <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" />
+            <path
+              d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+      </>
+    ) : (
+      <div class="slot">Видео: 30 секунд</div>
+    )
+  }
+</div>

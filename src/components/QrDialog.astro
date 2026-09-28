@@ -1,0 +1,18 @@
+---
+import StoreBadges from './StoreBadges.astro';
+---
+
+<!-- Десктоп: главная кнопка открывает код на смарт-ссылку, телефон уйдёт сразу в свой стор -->
+<dialog class="qr" data-qr aria-labelledby="qr-title">
+  <div class="qr__inner">
+    <button class="qr__close" type="button" data-qr-close aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </button>
+    <div class="qr__code" data-qr-code role="img" aria-label="QR-код со ссылкой на приложение"></div>
+    <h2 class="qr__title" id="qr-title">Наведи камеру телефона</h2>
+    <p class="qr__text">Откроется App Store или Google Play — там и продолжим.</p>
+    <StoreBadges />
+  </div>
+</dialog>

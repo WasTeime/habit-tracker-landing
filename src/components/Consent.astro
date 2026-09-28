@@ -1,0 +1,36 @@
+---
+import { CONFIG } from '../config';
+
+// Баннер нужен только если подключено что-то с cookie. Vercel Analytics работает без cookie.
+const { metrikaId, posthogKey, metaPixelId, tiktokPixelId, vkPixelId } = CONFIG.analytics;
+const needed = Boolean(metrikaId || posthogKey || metaPixelId || tiktokPixelId || vkPixelId);
+const optIn = CONFIG.consentMode === 'opt-in';
+---
+
+{
+  needed && (
+    <div class="consent" data-consent role="region" aria-label="Cookie и аналитика" hidden>
+      <p class="consent__text">
+        {optIn
+          ? 'Мы хотим включить cookie и аналитику, чтобы понимать, как работает страница.'
+          : 'Мы используем cookie и сервисы аналитики, чтобы понимать, как работает страница.'}
+        {CONFIG.privacyUrl && (
+          <>
+            {' '}
+            Подробнее — в <a href={CONFIG.privacyUrl} target="_blank" rel="noopener">политике обработки данных</a>.
+          </>
+        )}
+      </p>
+      <div class="consent__actions">
+        {optIn && (
+          <button type="button" class="consent__btn" data-consent-decline>
+            Отказаться
+          </button>
+        )}
+        <button type="button" class="consent__btn consent__btn--accept" data-consent-accept>
+          {optIn ? 'Принять' : 'Понятно'}
+        </button>
+      </div>
+    </div>
+  )
+}

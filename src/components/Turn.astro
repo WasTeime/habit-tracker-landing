@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// Одна реплика разговора. Десктоп: слева кто говорит, справа текст/медиа.
+// Мобилка: те же элементы становятся пузырями чата, подпись говорящего остаётся для скринридеров.
+interface Props extends HTMLAttributes<'div'> {
+  who?: 'batya' | 'you';
+  /** Продолжение реплики того же говорящего — подпись слева пустая */
+  continued?: boolean;
+  /** Расстояние между текстом и тем, что под ним: media 32, demo 24, reply 14 */
+  body?: 'media' | 'demo' | 'reply';
+  section?: string;
+  bodyAttrs?: HTMLAttributes<'div'>;
+}
+
+const { who = 'batya', continued = false, body = 'media', section, bodyAttrs, class: className, ...rest } = Astro.props;
+const label = who === 'you' ? 'Ты' : 'Батя';
+---
+
+<div class:list={['turn', `turn--${who}`, className]} data-track-section={section} {...rest}>
+  <div class="turn__who">{continued ? '' : label}</div>
+  <div class:list={['turn__body', `turn__body--${body}`]} {...bodyAttrs}>
+    <slot />
+  </div>
+</div>
