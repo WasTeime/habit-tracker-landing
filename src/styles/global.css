@@ -13,6 +13,7 @@
   --muted-2: #5a6a7e;
   --accent: #4caf89;
   --on-accent: #0b1220;
+  --danger: #ef8a7a;
 
   --font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   color-scheme: dark;
@@ -127,7 +128,8 @@ button {
 
 /* Демо подкручивает скролл к новым репликам — оставляем воздух у нижнего края */
 .turn,
-.cta__main {
+.cta__main,
+.waitlist {
   scroll-margin-bottom: 24px;
 }
 
@@ -333,6 +335,124 @@ button {
 
 .cta__main:active {
   transform: scale(0.99);
+}
+
+/* Лист ожидания: форма стоит на месте кнопки сторов и берёт её размеры (.cta, .cta__main) */
+.waitlist {
+  position: relative;
+}
+
+.waitlist__input {
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--border);
+  background: var(--bubble);
+  color: var(--text);
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.waitlist__input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.waitlist__input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(76 175 137 / 0.25);
+}
+
+.waitlist__input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.waitlist__input[aria-invalid='true']:focus-visible {
+  box-shadow: 0 0 0 3px rgb(239 138 122 / 0.22);
+}
+
+.waitlist__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-3);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.waitlist__consent input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.waitlist__consent input[aria-invalid='true'] {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.waitlist__consent a {
+  color: var(--text-2);
+}
+
+.waitlist__submit {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+}
+
+.waitlist__submit[aria-busy='true'] {
+  opacity: 0.75;
+  cursor: progress;
+}
+
+.waitlist__error {
+  color: var(--danger);
+}
+
+.waitlist__error:empty {
+  display: none;
+}
+
+.waitlist__trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.waitlist__done:focus {
+  outline: none;
+}
+
+/* Запасная форма почты под кнопкой бота: свёрнута в ссылку «Нет Telegram?» */
+.waitlist-alt summary {
+  width: fit-content;
+  margin: 0 auto;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 4px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.waitlist-alt summary::-webkit-details-marker {
+  display: none;
+}
+
+.waitlist-alt summary:hover {
+  color: var(--text-2);
+}
+
+.waitlist-alt[open] summary {
+  display: none;
 }
 
 .stores {
@@ -560,6 +680,27 @@ button {
     font-size: 12px;
     text-align: center;
   }
+
+  /* 16px — меньше iOS зумит страницу при фокусе */
+  .waitlist__input {
+    padding: 15px 16px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .waitlist__consent {
+    font-size: 13px;
+  }
+
+  .waitlist__error {
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .waitlist-alt {
+    align-self: stretch;
+    font-size: 14px;
+  }
 }
 
 /* ============ Десктоп 4a (≥ 1024) ============ */
@@ -640,12 +781,6 @@ button {
     color: var(--accent);
     font-size: 28px;
     font-weight: 700;
-  }
-
-  .hero__secret-b {
-    max-width: 420px;
-    color: var(--text-3);
-    font-size: 18px;
   }
 
   .script {
@@ -765,6 +900,26 @@ button {
   .cta__note {
     color: var(--muted);
     font-size: 14px;
+  }
+
+  .waitlist__input {
+    padding: 18px 20px;
+    border-radius: 16px;
+    font-size: 18px;
+  }
+
+  .waitlist__consent {
+    font-size: 14px;
+  }
+
+  .waitlist__error {
+    font-size: 15px;
+  }
+
+  .waitlist-alt {
+    width: 420px;
+    max-width: 100%;
+    font-size: 15px;
   }
 }
 

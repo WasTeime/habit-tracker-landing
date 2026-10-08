@@ -1,0 +1,57 @@
+---
+import { CONFIG } from '../config';
+import { COPY } from '../content';
+
+// Форма почты → письмо в день запуска. Без JS уходит обычным POST, сервер отвечает страницей.
+// lead=false — когда форма спрятана под кнопкой бота и вводная реплика не нужна
+interface Props {
+  lead?: boolean;
+}
+const { lead = true } = Astro.props;
+---
+
+{lead && <p class="line" data-copy="waitlistLead">{COPY.waitlistLead}</p>}
+
+<form class="cta waitlist" method="post" action="/api/subscribe" data-waitlist>
+  <label class="sr-only" for="waitlist-email">Почта</label>
+  <input
+    class="waitlist__input"
+    id="waitlist-email"
+    name="email"
+    type="email"
+    inputmode="email"
+    autocomplete="email"
+    autocapitalize="off"
+    spellcheck="false"
+    maxlength="254"
+    required
+    placeholder={COPY.waitlistPlaceholder}
+    aria-describedby="waitlist-error"
+  />
+
+  <!-- Ловушка для ботов: людям не видна и не доступна с клавиатуры -->
+  <div class="waitlist__trap" aria-hidden="true">
+    <input name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <label class="waitlist__consent">
+    <input type="checkbox" name="consent" value="1" required aria-describedby="waitlist-error" />
+    <span>
+      Соглашаюсь на {
+        CONFIG.privacyUrl ? (
+          <a href={CONFIG.privacyUrl} target="_blank" rel="noopener">
+            обработку персональных данных
+          </a>
+        ) : (
+          'обработку персональных данных'
+        )
+      }
+    </span>
+  </label>
+
+  <button class="cta__main waitlist__submit" type="submit" data-copy="waitlistButton">{COPY.waitlistButton}</button>
+  <p class="waitlist__error" id="waitlist-error" data-waitlist-error aria-live="assertive"></p>
+  <p class="cta__note" data-copy="waitlistNote">{COPY.waitlistNote}</p>
+</form>
+
+<p class="line waitlist__done" data-waitlist-done tabindex="-1" hidden></p>

@@ -2,7 +2,12 @@
 import '@fontsource/onest/400.css';
 import '@fontsource/onest/700.css';
 import StoreBadges from '../components/StoreBadges.astro';
+import { CONFIG } from '../config';
 import '../styles/global.css';
+
+// Пока приложения нет в сторах, вести некуда — отправляем на лендинг
+// (301 — чтобы статическая страница-редирект уходила сразу, а не через 2 секунды)
+if (CONFIG.ctaMode === 'waitlist') return Astro.redirect('/', 301);
 ---
 
 <!doctype html>

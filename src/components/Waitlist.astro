@@ -1,0 +1,42 @@
+---
+import { CONFIG } from '../config';
+import { COPY } from '../content';
+import WaitlistEmail from './WaitlistEmail.astro';
+
+// Пока приложения нет в сторах: главная кнопка — бот в Telegram, он и позовёт в день запуска.
+// Форма почты — запасной вариант под кнопкой (PUBLIC_WAITLIST_EMAIL), по умолчанию выключена.
+// Без JS кнопка всё равно ведёт в бота, просто без направления и utm.
+const { telegramBot, waitlistEmail } = CONFIG;
+const telegram = Boolean(telegramBot) || !waitlistEmail;
+if (!telegramBot) console.warn('[waitlist] не задан PUBLIC_TELEGRAM_BOT — кнопке листа ожидания некуда вести');
+---
+
+{
+  telegram ? (
+    <>
+      <p class="line" data-copy="tgLead">{COPY.tgLead}</p>
+      <div class="cta">
+        <a
+          class="cta__main"
+          href={telegramBot ? `https://t.me/${telegramBot}` : '#'}
+          target="_blank"
+          rel="noopener"
+          data-tg
+          data-copy="tgButton"
+        >
+          {COPY.tgButton}
+        </a>
+        <p class="cta__note" data-copy="tgNote">{COPY.tgNote}</p>
+      </div>
+      <p class="line" data-tg-done hidden>{COPY.tgDone}</p>
+      {waitlistEmail && (
+        <details class="waitlist-alt">
+          <summary data-copy="emailToggle">{COPY.emailToggle}</summary>
+          <WaitlistEmail lead={false} />
+        </details>
+      )}
+    </>
+  ) : (
+    <WaitlistEmail />
+  )
+}

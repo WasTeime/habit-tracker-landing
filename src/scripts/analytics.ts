@@ -29,7 +29,14 @@ const { metrikaId, posthogKey, posthogHost, metaPixelId, tiktokPixelId, vkPixelI
 export const hasTrackers = Boolean(metrikaId || posthogKey || metaPixelId || tiktokPixelId || vkPixelId);
 
 // Эти события уходят ещё и в пиксели и Vercel; скролл, время и видео — только в Метрику и PostHog
-const CONVERSION_EVENTS = new Set(['direction_click', 'cta_click', 'store_click', 'qr_shown']);
+const CONVERSION_EVENTS = new Set(['direction_click', 'cta_click', 'store_click', 'qr_shown', 'tg_click', 'waitlist_signup']);
+
+// Заявку пиксели получают стандартным событием — на него можно оптимизировать рекламу.
+// tg_click — это переход в бота: само «Запустить» происходит в Telegram, браузер его не видит
+const PIXEL_STANDARD: Record<string, { meta: string; tiktok: string }> = {
+  tg_click: { meta: 'Lead', tiktok: 'SubmitForm' },
+  waitlist_signup: { meta: 'Lead', tiktok: 'SubmitForm' },
+};
 
 const debug = location.hostname === 'localhost' || location.search.includes('debug_analytics');
 
@@ -118,8 +125,9 @@ export function track(name: string, params: Params = {}, onSent?: () => void): v
 
   if (!CONVERSION_EVENTS.has(name)) return;
 
-  window.fbq?.('trackCustom', name, data);
-  window.ttq?.track(name, data);
+  const standard = PIXEL_STANDARD[name];
+  window.fbq?.(standard ? 'track' : 'trackCustom', standard?.meta ?? name, data);
+  window.ttq?.track(standard?.tiktok ?? name, data);
   if (vkPixelId && window._tmr) window._tmr.push({ type: 'reachGoal', id: vkPixelId, goal: name });
 
   // Vercel принимает мало свойств на событие (и только на платных планах) — шлём главное

@@ -6,8 +6,12 @@ import Hero from '../components/Hero.astro';
 import QrDialog from '../components/QrDialog.astro';
 import Screens from '../components/Screens.astro';
 import Turn from '../components/Turn.astro';
+import Waitlist from '../components/Waitlist.astro';
+import { CONFIG } from '../config';
 import { COPY, DIRECTIONS } from '../content';
 import Base from '../layouts/Base.astro';
+
+const waitlist = CONFIG.ctaMode === 'waitlist';
 ---
 
 <Base>
@@ -65,13 +69,13 @@ import Base from '../layouts/Base.astro';
       </template>
 
       <Turn continued section="cta" class="turn--cta">
-        <Cta />
+        {waitlist ? <Waitlist /> : <Cta />}
       </Turn>
     </section>
     <script is:inline>window.__abApply && window.__abApply();</script>
   </main>
 
-  <QrDialog />
+  {!waitlist && <QrDialog />}
   <Consent />
 
   <script>

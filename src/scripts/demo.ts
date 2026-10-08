@@ -22,7 +22,7 @@ export function initDemo(): void {
   const chips = document.querySelectorAll<HTMLButtonElement>('[data-direction]');
   const output = document.querySelector<HTMLElement>('[data-demo-reply]');
   const template = document.querySelector<HTMLTemplateElement>('#tpl-demo-reply');
-  const ctaButton = document.querySelector('[data-cta-main]');
+  const cta = document.querySelector('[data-cta-main], [data-tg], [data-waitlist]');
   if (!output || !template) return;
 
   let current: string | null = null;
@@ -59,7 +59,7 @@ export function initDemo(): void {
     });
     later(250 + typingMs + 400, () => {
       body.append(line(COPY.restInApp));
-      reveal(ctaButton);
+      reveal(cta);
     });
   };
 
