@@ -32,12 +32,15 @@ async function api(method: string, params: Record<string, unknown>): Promise<voi
   }
 }
 
-const send = (chatId: string, text: string) =>
-  api('sendMessage', { chat_id: chatId, text, link_preview_options: { is_disabled: true } });
+const send = (chatId: string, text: string, extra: Record<string, unknown> = {}) =>
+  api('sendMessage', { chat_id: chatId, text, link_preview_options: { is_disabled: true }, ...extra });
+
+const escapeHtml = (text: string) => text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
 
 type Chat = { id: number; type: string };
+type User = { id: number; first_name?: string; last_name?: string; username?: string };
 export type Update = {
-  message?: { chat: Chat; text?: string };
+  message?: { chat: Chat; from?: User; text?: string };
   my_chat_member?: { chat: Chat; new_chat_member: { status: string } };
 };
 
@@ -58,22 +61,37 @@ function welcome(direction: string | undefined): string {
     .join('\n\n');
 }
 
-async function notifyAdmin(sub: TgSubscriber, saved: boolean): Promise<void> {
-  const admin = getSecret('TELEGRAM_ADMIN_CHAT_ID');
-  if (!admin) return;
-  const total = saved ? await countTgSubscribers().catch(() => null) : null;
-  const source = [sub.utm_source, sub.utm_medium, sub.utm_campaign].filter(Boolean).join(' / ');
-  const lines = [
-    `Новый подписчик${total ? ` (всего ${total})` : ''}`,
-    sub.direction && `Направление: ${DIRECTIONS.find((d) => d.id === sub.direction)?.label ?? sub.direction}`,
-    `Источник: ${source || 'прямой заход'}`,
-    sub.device && `Устройство: ${sub.device}`,
-    !saved && '⚠️ Не сохранён: не подключён Redis (KV_REST_API_*)',
-  ];
-  await send(admin, lines.filter(Boolean).join('\n'));
+// Имя и username идут только в уведомление админу, в базе их не храним
+function who(user: User | undefined, chatId: string): string {
+  const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'без имени';
+  const link = `<a href="tg://user?id=${chatId}">${escapeHtml(name)}</a>`;
+  return user?.username ? `${link} (@${user.username})` : link;
 }
 
-async function start(chatId: string, payload: string): Promise<void> {
+/** Новая заявка → сообщение в TELEGRAM_ADMIN_CHAT_ID (можно несколько id через запятую). */
+async function notifyAdmin(sub: TgSubscriber, user: User | undefined, saved: boolean): Promise<void> {
+  const admins = (getSecret('TELEGRAM_ADMIN_CHAT_ID') ?? '').split(',').map((id) => id.trim()).filter(Boolean);
+  if (!admins.length) return;
+  const total = saved ? await countTgSubscribers().catch(() => null) : null;
+  const source = [sub.utm_source, sub.utm_medium, sub.utm_campaign].filter(Boolean).join(' / ');
+  const direction = DIRECTIONS.find((d) => d.id === sub.direction)?.label ?? sub.direction;
+  const lines = [
+    `<b>Новая заявка</b>${total ? ` · всего ${total}` : ''}`,
+    `Кто: ${who(user, sub.telegram_id)}`,
+    direction && `Направление: ${escapeHtml(direction)}`,
+    `Источник: ${escapeHtml(source || 'прямой заход')}`,
+    sub.device && `Устройство: ${escapeHtml(sub.device)}`,
+    !saved && '⚠️ Не сохранена: не подключён Redis (UPSTASH_REDIS_REST_*)',
+  ];
+  const html = lines.filter(Boolean).join('\n');
+  // Если Telegram не примет разметку (например, ссылку на профиль) — то же самое простым текстом
+  const plain = html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  await Promise.all(
+    admins.map((admin) => send(admin, html, { parse_mode: 'HTML' }).catch(() => send(admin, plain))),
+  );
+}
+
+async function start(chatId: string, payload: string, user: User | undefined): Promise<void> {
   const { direction, ref } = parseStart(payload);
   const fromClick = ref && redisConfigured() ? await readTgRef(ref) : {};
   const sub: TgSubscriber = {
@@ -96,8 +114,12 @@ async function start(chatId: string, payload: string): Promise<void> {
     console.error('[telegram] Redis не подключён — подписчик не сохранён:', sub);
   }
 
-  await send(chatId, isNew ? welcome(sub.direction) : BOT_COPY.already);
-  if (isNew) await notifyAdmin(sub, redisConfigured()).catch((error) => console.error('[telegram] admin', error));
+  // Уведомление админу не зависит от того, дошло ли приветствие
+  const results = await Promise.allSettled([
+    send(chatId, isNew ? welcome(sub.direction) : BOT_COPY.already),
+    isNew ? notifyAdmin(sub, user, redisConfigured()) : null,
+  ]);
+  for (const result of results) if (result.status === 'rejected') console.error('[telegram]', result.reason);
 }
 
 export async function handleUpdate(update: Update): Promise<void> {
@@ -115,13 +137,13 @@ export async function handleUpdate(update: Update): Promise<void> {
 
   switch (command.toLowerCase()) {
     case '/start':
-      return start(chatId, payload);
+      return start(chatId, payload, message.from);
     case '/stop':
       if (redisConfigured()) await removeTgSubscriber(chatId);
       return send(chatId, BOT_COPY.stopped);
     case '/id':
       // Чтобы узнать свой chat id для TELEGRAM_ADMIN_CHAT_ID
-      return send(chatId, `chat id: ${chatId}`);
+      return send(chatId, `Твой chat id: ${chatId}`);
     default:
       return send(chatId, BOT_COPY.idle);
   }
