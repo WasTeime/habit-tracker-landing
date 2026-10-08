@@ -77,7 +77,7 @@ npm run tg -- broadcast release.txt
 
 Пока файлов нет, на месте скринов и видео — пустые слоты, как в макете. Ничего в коде менять не надо, достаточно положить файлы и пересобрать.
 
-`og.png` (1200×630), `favicon.svg/ico`, `apple-touch-icon.png` уже лежат в `public/`. Перегенерировать: `npm run icons` (скрипт `scripts/make-icons.mjs`).
+`og.png` (1200×630), `favicon.ico` (16/32/48), `icon-192.png`, `apple-touch-icon.png` уже лежат в `public/`. Иконки — лицо Бати из `src/assets/batya-wave.webp`. Перегенерировать: `npm run icons` (скрипт `scripts/make-icons.mjs`, кадр лица — константа `FACE`).
 
 ## Переменные окружения
 
