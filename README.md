@@ -93,6 +93,8 @@ npm run tg -- broadcast release.txt
 
 Пока файлов нет, на месте скринов и видео — пустые слоты, как в макете. Ничего в коде менять не надо, достаточно положить файлы и пересобрать.
 
+**Первый экран** — картинка `src/assets/batya-meditate.png` во весь экран (1671×941; для чёткости на телефонах лучше та же картинка в 2–3 раза крупнее). Надписи поверх — SVG в координатах картинки, они держатся за голову Тренера при любом кадрировании. При замене картинки перемерить `HEAD` и `SUN` в `src/components/Hero.astro`. Шрифт надписей — Caveat (`--font-hero` в `global.css`), остальной сайт на Onest.
+
 `og.png` (1200×630), `favicon.ico` (16/32/48), `icon-192.png`, `apple-touch-icon.png` уже лежат в `public/`. Иконки — лицо Тренера из `src/assets/batya-wave.webp`. Перегенерировать: `npm run icons` (скрипт `scripts/make-icons.mjs`, кадр лица — константа `FACE`).
 
 ## Переменные окружения
@@ -142,6 +144,7 @@ UTM и click id (`yclid`, `fbclid`, `ttclid`, `rb_clickid`, `gclid`) сохра�
 | `page_view` | загрузка | referrer |
 | `scroll_depth` | 25 / 50 / 75 / 100% | depth |
 | `section_view` | секция ≥ 50% в кадре впервые | section: hero, screens, video, demo, cta |
+| `dialog_start` | кнопка «Ну и как это выглядит?» — дальше разговор идёт сам | — |
 | `screenshot_view` | скрин в кадре / свайп | index |
 | `video_play` | первый старт | autoplay |
 | `video_progress` | 25 / 50 / 75 / 100% | percent |
@@ -159,7 +162,7 @@ UTM и click id (`yclid`, `fbclid`, `ttclid`, `rb_clickid`, `gclid`) сохра�
 Куда уходит:
 
 - **Яндекс Метрика** — все события как цели `reachGoal`, `page_view` — в параметры визита. `section_view` уходит целями `section_view_hero`, `section_view_screens` и т. д. (Метрика не умеет фильтровать цель по параметру, а для воронки нужны отдельные шаги). Вебвизор, карта кликов, точный показатель отказов включены в коде; карту скроллинга включить в настройках счётчика.
-  В интерфейсе Метрики создать цели типа «JavaScript-событие» с идентификаторами: `tg_click`, `direction_click`, `section_view_screens`, `section_view_demo` (+ остальные по желанию; если включена почта — `waitlist_start`, `waitlist_signup`; на релизе — `cta_click`, `store_click`, `qr_shown`). Воронка — составная цель: `section_view_screens` → `section_view_demo` → `direction_click` → `tg_click` (на релизе последний шаг — `store_click`). Нажатие «Запустить» происходит уже в Telegram, Метрика его не видит — реальное число подписчиков показывает бот (уведомления, `npm run tg -- info`, CSV).
+  В интерфейсе Метрики создать цели типа «JavaScript-событие» с идентификаторами: `dialog_start`, `tg_click`, `direction_click`, `section_view_screens`, `section_view_demo` (+ остальные по желанию; если включена почта — `waitlist_start`, `waitlist_signup`; на релизе — `cta_click`, `store_click`, `qr_shown`). Воронка — составная цель: `dialog_start` → `section_view_screens` → `section_view_demo` → `direction_click` → `tg_click` (на релизе последний шаг — `store_click`). Нажатие «Запустить» происходит уже в Telegram, Метрика его не видит — реальное число подписчиков показывает бот (уведомления, `npm run tg -- info`, CSV).
 - **PostHog** — все события, `page_view` как `$pageview`. Воронки строятся по `section_view` с фильтром по `section`.
 - **Пиксели** (Meta / TikTok / VK) — только `direction_click`, `tg_click`, `waitlist_signup`, `cta_click`, `store_click`, `qr_shown` + просмотр страницы. Переход в бота и заявка с почты уходят стандартным событием — `Lead` в Meta, `SubmitForm` в TikTok, — на них можно оптимизировать кампании.
 - **Vercel Web Analytics** — просмотры, источники, страны, устройства на любом плане. Кастомные события (те же, что в пиксели) Vercel принимает только на Pro; на Hobby они просто не сохраняются.
@@ -179,11 +182,11 @@ UTM и click id (`yclid`, `fbclid`, `ttclid`, `rb_clickid`, `gclid`) сохра�
 
 ## A/B
 
-Заголовок первого экрана и текст главной кнопки подменяются вариантом из `AB_VARIANTS` в `src/content.ts`:
+Тексты с атрибутом `data-copy` (например, главная кнопка) подменяются вариантом из `AB_VARIANTS` в `src/content.ts`. Вопрос и «Я знаю секрет» на первом экране нарисованы на картинке и через A/B не меняются — только скрытый `h1` для поиска:
 
 ```ts
 export const AB_VARIANTS = {
-  b: { heroTitle: '…', ctaMain: '…' },
+  b: { tgButton: '…', ctaMain: '…' },
 };
 ```
 
@@ -200,7 +203,7 @@ src/
   pages/api/          telegram (вебхук бота), tg-ref (метки клика), subscribe (форма почты), waitlist.csv и survey.csv (выгрузки)
   server/             telegram (бот), survey (опрос), tgapi (Bot API), waitlist (подписчики), csv (выгрузки), redis (клиент Upstash)
   components/         Hero, Turn (реплика), Screens, DemoVideo, Waitlist (+WaitlistEmail), Cta, StoreBadges, QrDialog, Consent
-  scripts/            analytics, links (ссылки на стор), demo (чат), video, telegram (кнопка бота), waitlist (форма почты), cta (+QR), engagement (скролл/секции/время), consent
+  scripts/            analytics, links (ссылки на стор), dialog (разговор по шагам), demo (выбор направления), screens (карусель скринов), video, telegram (кнопка бота), waitlist (форма почты), cta (+QR), engagement (скролл/секции/время), consent
   styles/global.css   токены и вся вёрстка; мобильная и десктопная раскладки — два медиазапроса
 public/               og.png, иконки, media/ для видео, badges/ для бейджей
 scripts/make-icons.mjs
@@ -218,4 +221,4 @@ scripts/telegram.mjs  вебхук, проверка бота, рассылка 
 - баннер cookie;
 - страница `/go`: «Открываю магазин приложений…» / «Выбери свой магазин».
 
-Поведение, которого не было в макете: выбранная чипса остаётся залитой; после ответа Тренера страница мягко доводит до кнопки, если она ниже экрана; видео зациклено, ставится на паузу вне экрана, первое включение звука начинает ролик сначала.
+Поведение, которого не было в макете: первый экран — картинка во весь экран, вопрос выплывает дугой из-за Тренера, потом слева «Я знаю», справа «секрет». Разговор открывается по шагам — сначала первая реплика Тренера и кнопка «Ну и как это выглядит?», после клика реплики идут по одной с паузой и «печатает…» (паузы — константы в `src/scripts/dialog.ts`; без JS всё видно сразу). Кнопка Telegram появляется только после выбора направления (подпись над ней — обычный текст, не реплика Тренера), так что кто не дошёл до выбора — её не увидит: следить за `dialog_start` и `direction_click`. На телефоне скрины — карусель с точками. Выбранная чипса остаётся залитой; после ответа Тренера страница мягко доводит до кнопки, если она ниже экрана; видео зациклено, ставится на паузу вне экрана, первое включение звука начинает ролик сначала.

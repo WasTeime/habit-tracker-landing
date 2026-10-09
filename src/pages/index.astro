@@ -15,34 +15,39 @@ const waitlist = CONFIG.ctaMode === 'waitlist';
 ---
 
 <Base>
-  <main class="page">
+  <main>
     <Hero />
     <script is:inline>window.__abApply && window.__abApply();</script>
 
-    <section class="script" aria-label="Разговор с Тренером">
+    <section class="script" id="talk" aria-label="Разговор с Тренером">
       <Turn>
         <p class="line line--first">{COPY.intro}</p>
       </Turn>
 
-      <Turn who="you">
-        <p class="line">{COPY.askHow}</p>
+      {/* Разговор по шагам (scripts/dialog.ts): data-step скрыты до клика по кнопке */}
+      <Turn who="you" class="ask" data-ask>
+        <button type="button" class="chip" data-copy="askHow">{COPY.askHow}</button>
       </Turn>
 
-      <Turn>
+      <Turn who="you" data-step tabindex="-1">
+        <p class="line" data-copy="askHow">{COPY.askHow}</p>
+      </Turn>
+
+      <Turn data-step>
         <p class="line">{COPY.showDay}</p>
         <Screens />
       </Turn>
 
-      <Turn continued>
+      <Turn continued data-step>
         <p class="line">{COPY.missRule}</p>
         <DemoVideo />
       </Turn>
 
-      <Turn who="you">
+      <Turn who="you" data-step>
         <p class="line">{COPY.askStart}</p>
       </Turn>
 
-      <Turn body="demo" section="demo">
+      <Turn body="demo" section="demo" data-step>
         <p class="line">{COPY.honestAnswer}</p>
         <div class="chips" role="group" aria-label="Что стоит на месте">
           {
@@ -68,7 +73,7 @@ const waitlist = CONFIG.ctaMode === 'waitlist';
         </Turn>
       </template>
 
-      <Turn continued section="cta" class="turn--cta">
+      <Turn continued section="cta" class="turn--cta" data-step data-after-pick>
         {waitlist ? <Waitlist /> : <Cta />}
       </Turn>
     </section>

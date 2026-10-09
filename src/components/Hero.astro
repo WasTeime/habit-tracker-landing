@@ -1,31 +1,102 @@
 ---
 import { Picture } from 'astro:assets';
-import scene from '../assets/batya-scene-chair.png';
+import scene from '../assets/batya-meditate.png';
 import { COPY } from '../content';
+
+// Картинка во весь экран, поверх — SVG в координатах самой картинки: viewBox = размер исходника,
+// slice + xMidYMin ведут себя как object-fit: cover + object-position: 50% 0, так что надписи
+// держатся за голову Тренера при любом кадрировании.
+// Координаты сняты с исходника 1671×941 — при замене картинки перемерить HEAD и SUN.
+const W = 1671;
+const H = 941;
+const HEAD = { x: 824, y: 250, rx: 80, ry: 100 };
+const SUN = { x: 830, y: 293 };
+// Шея и плечи — вопрос поднимается из-за них
+const BODY = '745,320 905,320 1050,420 1100,941 545,941 600,420';
+
+// Дуга по часовой поверх центра: от -deg до +deg от вертикали. Пути с запасом, текст по центру
+function arc(cx: number, cy: number, r: number, deg: number): string {
+  const a = (deg * Math.PI) / 180;
+  const dx = r * Math.sin(a);
+  const y = (cy - r * Math.cos(a)).toFixed(1);
+  return `M${(cx - dx).toFixed(1)} ${y}A${r} ${r} 0 0 1 ${(cx + dx).toFixed(1)} ${y}`;
+}
+
+// На телефоне вопрос — две дуги вокруг головы, длинная половина снаружи
+function split(text: string): [string, string] {
+  const words = text.split(' ');
+  let at = 1;
+  for (let i = 1, best = Infinity; i < words.length; i++) {
+    const diff = Math.abs(words.slice(0, i).join(' ').length - text.length * 0.6);
+    if (diff < best) [best, at] = [diff, i];
+  }
+  return [words.slice(0, at).join(' '), words.slice(at).join(' ')];
+}
+
+const [outer, inner] = split(COPY.heroTitle);
+// «Я знаю» — слева от головы, «секрет» — справа
+const cut = COPY.heroSecret.lastIndexOf(' ');
+const left = COPY.heroSecret.slice(0, cut);
+const right = COPY.heroSecret.slice(cut + 1);
 ---
 
 <section class="hero" data-track-section="hero">
-  <div class="hero__media">
-    <Picture
-      src={scene}
-      alt="Тренер в кресле"
-      class="hero__img"
-      formats={['avif', 'webp']}
-      fallbackFormat="jpg"
-      widths={[480, 720, 1000, 1254]}
-      sizes="(min-width: 1024px) 860px, min(100vw, 560px)"
-      loading="eager"
-      fetchpriority="high"
-    />
-    <div class="hero__shade"></div>
-    <p class="hero__online">{COPY.online}</p>
-  </div>
+  <Picture
+    src={scene}
+    alt="Тренер медитирует на холме над городом"
+    class="hero__img"
+    formats={['avif', 'webp']}
+    fallbackFormat="jpg"
+    widths={[828, 1280, scene.width]}
+    sizes={`(max-aspect-ratio: ${W}/${H}) ${Math.ceil((W / H) * 100)}vh, 100vw`}
+    loading="eager"
+    fetchpriority="high"
+  />
+  <div class="hero__shade"></div>
 
-  <div class="hero__text">
-    <p class="hero__label">{COPY.label}</p>
-    <h1 class="hero__title" data-copy="heroTitle">{COPY.heroTitle}</h1>
-    <p class="hero__secret">
-      <span class="hero__secret-a">{COPY.heroSecret}</span>
-    </p>
-  </div>
+  {/* Текст на картинке — для глаз; для поиска и скринридеров — h1 и p ниже. A/B по heroTitle сюда не доходит */}
+  <svg class="hero__art" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+    <defs>
+      {/* Вопрос выплывает из-за Тренера: всё, что под головой и плечами, не видно */}
+      <mask id="hero-behind" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+        <rect width={W} height={H} fill="#fff"></rect>
+        <ellipse cx={HEAD.x} cy={HEAD.y} rx={HEAD.rx} ry={HEAD.ry} fill="#000"></ellipse>
+        <polygon points={BODY} fill="#000"></polygon>
+      </mask>
+      <path id="hero-arc" d={arc(HEAD.x, 1100, 1000, 50)}></path>
+      {/* Телефон: две пологие дуги над головой — центр ниже солнца, чтобы концы не сползали на виски */}
+      <path id="hero-arc-out" d={arc(SUN.x, SUN.y + 220, 450, 75)}></path>
+      <path id="hero-arc-in" d={arc(SUN.x, SUN.y + 220, 400, 75)}></path>
+    </defs>
+
+    <g mask="url(#hero-behind)">
+      <g class="hero__q" style={`transform-origin: ${HEAD.x}px ${HEAD.y}px`}>
+        <text class="hero__wide" text-anchor="middle">
+          <textPath href="#hero-arc" startOffset="50%">{COPY.heroTitle}</textPath>
+        </text>
+        <g class="hero__narrow" text-anchor="middle">
+          <text><textPath href="#hero-arc-out" startOffset="50%">{outer}</textPath></text>
+          <text><textPath href="#hero-arc-in" startOffset="50%">{inner}</textPath></text>
+        </g>
+      </g>
+    </g>
+
+    <g class="hero__wide">
+      <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - 24} y="290" text-anchor="end">{left}</text>
+      <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + 24} y="290">{right}</text>
+    </g>
+    <g class="hero__narrow">
+      <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - 6} y="282" text-anchor="end">{left}</text>
+      <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + 6} y="282">{right}</text>
+    </g>
+  </svg>
+
+  <h1 class="sr-only" data-copy="heroTitle">{COPY.heroTitle}</h1>
+  <p class="sr-only">{COPY.heroSecret}</p>
+
+  <a class="hero__next" href="#talk" aria-label="К разговору">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </a>
 </section>

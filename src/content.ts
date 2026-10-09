@@ -1,8 +1,6 @@
 // Копия финальная (см. handoff). Не переписывать без согласования.
 
 export const COPY = {
-  label: 'Тренер',
-  online: 'Тренер. Онлайн',
   heroTitle: 'Давно не можешь прийти к своим целям?',
   heroSecret: 'Я знаю секрет',
 
@@ -113,7 +111,8 @@ export const SCREEN_SLOTS = [
 
 // A/B: ключ варианта → тексты, которые он подменяет. Включается ссылкой ?v=<ключ>,
 // ключ уходит во все события параметром `ab`. Менять можно любой элемент с data-copy.
-// Пример: b: { heroTitle: '<другой заголовок>', ctaMain: '<другой текст кнопки>' }
+// Пример: b: { tgButton: '<другой текст кнопки>', tgLead: '<другая подпись>' }.
+// heroTitle и heroSecret нарисованы на картинке hero — A/B меняет только скрытый h1
 export const AB_VARIANTS: Record<string, Partial<Record<CopyKey, string>>> = {};
 
 export const META = {

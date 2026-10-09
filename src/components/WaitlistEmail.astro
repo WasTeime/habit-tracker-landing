@@ -10,7 +10,7 @@ interface Props {
 const { lead = true } = Astro.props;
 ---
 
-{lead && <p class="line" data-copy="waitlistLead">{COPY.waitlistLead}</p>}
+{lead && <p class="cta__lead" data-copy="waitlistLead">{COPY.waitlistLead}</p>}
 
 <form class="cta waitlist" method="post" action="/api/subscribe" data-waitlist>
   <label class="sr-only" for="waitlist-email">Почта</label>

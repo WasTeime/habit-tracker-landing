@@ -24,13 +24,21 @@ const images = Object.keys(files)
             class="screen__img"
             formats={['avif', 'webp']}
             widths={[240, 360, 480, 720]}
-            sizes="(min-width: 1024px) 240px, 172px"
+            sizes="(min-width: 1024px) 240px, min(66vw, 280px)"
             loading="lazy"
           />
         ) : (
           <div class="slot">{slot.placeholder}</div>
         )}
       </figure>
+    ))
+  }
+</div>
+{/* Точки карусели — только на телефоне и с JS (scripts/screens.ts) */}
+<div class="screens__dots">
+  {
+    SCREEN_SLOTS.map((slot, i) => (
+      <button type="button" class="screens__dot" aria-label={`Скрин ${i + 1}: ${slot.alt}`} aria-current={i === 0 ? 'true' : 'false'} />
     ))
   }
 </div>

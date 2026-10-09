@@ -1,15 +1,6 @@
 import { COPY, DIRECTIONS } from '../content';
 import { setDirection, track } from './analytics';
-
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-// Подтягиваем новую реплику в кадр, если она ушла под нижний край экрана
-function reveal(el: Element | null): void {
-  if (!el) return;
-  const rect = el.getBoundingClientRect();
-  if (rect.bottom <= window.innerHeight - 16) return;
-  el.scrollIntoView({ block: 'nearest', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
-}
+import { PAUSE_MS, reveal, show } from './dialog';
 
 function line(text: string): HTMLParagraphElement {
   const p = document.createElement('p');
@@ -22,7 +13,7 @@ export function initDemo(): void {
   const chips = document.querySelectorAll<HTMLButtonElement>('[data-direction]');
   const output = document.querySelector<HTMLElement>('[data-demo-reply]');
   const template = document.querySelector<HTMLTemplateElement>('#tpl-demo-reply');
-  const cta = document.querySelector('[data-cta-main], [data-tg], [data-waitlist]');
+  const cta = document.querySelector<HTMLElement>('[data-after-pick]');
   if (!output || !template) return;
 
   let current: string | null = null;
@@ -59,7 +50,11 @@ export function initDemo(): void {
     });
     later(250 + typingMs + 400, () => {
       body.append(line(COPY.restInApp));
-      reveal(cta);
+      reveal(batya);
+    });
+    // Кнопка Telegram — только после ответа на выбор, дальше остаётся на месте
+    later(250 + typingMs + 400 + PAUSE_MS, () => {
+      if (cta) show(cta);
     });
   };
 
