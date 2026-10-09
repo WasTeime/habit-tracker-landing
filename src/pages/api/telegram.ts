@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { botToken, handleUpdate, webhookSecret, type Update } from '../../server/telegram';
+import { handleUpdate, type Update } from '../../server/telegram';
+import { botToken, webhookSecret } from '../../server/tgapi';
 
 export const prerender = false;
 

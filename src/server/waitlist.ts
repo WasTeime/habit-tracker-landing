@@ -121,6 +121,17 @@ export async function addTgSubscriber(sub: TgSubscriber): Promise<boolean> {
   return Number(await command('HSETNX', TG_KEY, sub.telegram_id, JSON.stringify(sub))) === 1;
 }
 
+/** Направление и источник подписчика — без самого id и даты. */
+export async function readTgSubscriber(telegramId: string): Promise<Attribution> {
+  try {
+    const raw = (await command('HGET', TG_KEY, telegramId)) as string | null;
+    return raw ? readAttribution(JSON.parse(raw) as Record<string, unknown>) : {};
+  } catch (error) {
+    console.error('[waitlist] tg subscriber', error);
+    return {};
+  }
+}
+
 export async function removeTgSubscriber(telegramId: string): Promise<void> {
   await command('HDEL', TG_KEY, telegramId);
 }

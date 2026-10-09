@@ -33,12 +33,13 @@ export async function setWebhook(token, siteUrl) {
   const reply = await api(token, 'setWebhook', {
     url,
     secret_token: webhookSecret(token),
-    allowed_updates: ['message', 'my_chat_member'],
+    allowed_updates: ['message', 'callback_query', 'my_chat_member'],
   });
   if (!reply.ok) throw new Error(`setWebhook: ${reply.description}`);
   await api(token, 'setMyCommands', {
     commands: [
       { command: 'start', description: 'Позвать меня в день запуска' },
+      { command: 'opros', description: 'Пара вопросов, чтобы сделать приложение под тебя' },
       { command: 'stop', description: 'Больше не писать' },
     ],
   });

@@ -1,9 +1,18 @@
 // Бот листа ожидания: /start записывает, /stop вычёркивает, блокировка бота — тоже вычёркивает.
+// После подписки предлагает кастдев-опрос (src/server/survey.ts), /opros — пройти его позже.
 // Вебхук регистрируется сам при продакшен-сборке на Vercel (scripts/telegram.mjs).
-import { createHash } from 'node:crypto';
-import { getSecret } from 'astro:env/server';
 import { BOT_COPY, DIRECTIONS } from '../content';
 import { redisConfigured } from './redis';
+import {
+  cancelSurvey,
+  handleSurveyCallback,
+  handleSurveyText,
+  offerSurvey,
+  startSurvey,
+  surveyAvailable,
+  type CallbackQuery,
+} from './survey';
+import { escapeHtml, notifyAdmins, send } from './tgapi';
 import {
   addTgSubscriber,
   countTgSubscribers,
@@ -13,34 +22,10 @@ import {
   type TgSubscriber,
 } from './waitlist';
 
-export const botToken = (): string => getSecret('TELEGRAM_BOT_TOKEN') ?? '';
-
-// Секрет вебхука выводится из токена — отдельная переменная не нужна. Та же формула в scripts/telegram.mjs
-export const webhookSecret = (token: string): string =>
-  createHash('sha256').update(`batya-webhook:${token}`).digest('hex').slice(0, 32);
-
-async function api(method: string, params: Record<string, unknown>): Promise<void> {
-  const response = await fetch(`https://api.telegram.org/bot${botToken()}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!response.ok) {
-    const reply = (await response.json().catch(() => ({}))) as { description?: string };
-    throw new Error(`telegram ${method}: ${reply.description ?? `HTTP ${response.status}`}`);
-  }
-}
-
-const send = (chatId: string, text: string, extra: Record<string, unknown> = {}) =>
-  api('sendMessage', { chat_id: chatId, text, link_preview_options: { is_disabled: true }, ...extra });
-
-const escapeHtml = (text: string) => text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
-
 type Chat = { id: number; type: string };
-type User = { id: number; first_name?: string; last_name?: string; username?: string };
 export type Update = {
-  message?: { chat: Chat; from?: User; text?: string };
+  message?: { chat: Chat; text?: string };
+  callback_query?: CallbackQuery;
   my_chat_member?: { chat: Chat; new_chat_member: { status: string } };
 };
 
@@ -61,37 +46,19 @@ function welcome(direction: string | undefined): string {
     .join('\n\n');
 }
 
-// Имя и username идут только в уведомление админу, в базе их не храним
-function who(user: User | undefined, chatId: string): string {
-  const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'без имени';
-  const link = `<a href="tg://user?id=${chatId}">${escapeHtml(name)}</a>`;
-  return user?.username ? `${link} (@${user.username})` : link;
-}
-
-/** Новая заявка → сообщение в TELEGRAM_ADMIN_CHAT_ID (можно несколько id через запятую). */
-async function notifyAdmin(sub: TgSubscriber, user: User | undefined, saved: boolean): Promise<void> {
-  const admins = (getSecret('TELEGRAM_ADMIN_CHAT_ID') ?? '').split(',').map((id) => id.trim()).filter(Boolean);
-  if (!admins.length) return;
+/** Новая заявка → админу: сколько всего и откуда пришёл. */
+async function notifyAdmin(sub: TgSubscriber, saved: boolean): Promise<void> {
   const total = saved ? await countTgSubscribers().catch(() => null) : null;
   const source = [sub.utm_source, sub.utm_medium, sub.utm_campaign].filter(Boolean).join(' / ');
-  const direction = DIRECTIONS.find((d) => d.id === sub.direction)?.label ?? sub.direction;
   const lines = [
     `<b>Новая заявка</b>${total ? ` · всего ${total}` : ''}`,
-    `Кто: ${who(user, sub.telegram_id)}`,
-    direction && `Направление: ${escapeHtml(direction)}`,
-    `Источник: ${escapeHtml(source || 'прямой заход')}`,
-    sub.device && `Устройство: ${escapeHtml(sub.device)}`,
+    `Откуда: ${escapeHtml(source || 'прямой заход')}`,
     !saved && '⚠️ Не сохранена: не подключён Redis (UPSTASH_REDIS_REST_*)',
   ];
-  const html = lines.filter(Boolean).join('\n');
-  // Если Telegram не примет разметку (например, ссылку на профиль) — то же самое простым текстом
-  const plain = html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  await Promise.all(
-    admins.map((admin) => send(admin, html, { parse_mode: 'HTML' }).catch(() => send(admin, plain))),
-  );
+  await notifyAdmins(lines.filter(Boolean).join('\n'));
 }
 
-async function start(chatId: string, payload: string, user: User | undefined): Promise<void> {
+async function start(chatId: string, payload: string): Promise<void> {
   const { direction, ref } = parseStart(payload);
   const fromClick = ref && redisConfigured() ? await readTgRef(ref) : {};
   const sub: TgSubscriber = {
@@ -117,9 +84,11 @@ async function start(chatId: string, payload: string, user: User | undefined): P
   // Уведомление админу не зависит от того, дошло ли приветствие
   const results = await Promise.allSettled([
     send(chatId, isNew ? welcome(sub.direction) : BOT_COPY.already),
-    isNew ? notifyAdmin(sub, user, redisConfigured()) : null,
+    isNew ? notifyAdmin(sub, redisConfigured()) : null,
   ]);
   for (const result of results) if (result.status === 'rejected') console.error('[telegram]', result.reason);
+  // Опрос — следующим сообщением после приветствия (и тем, кто подписался раньше, но ещё не отвечал)
+  await offerSurvey(chatId).catch((error) => console.error('[telegram] survey', error));
 }
 
 export async function handleUpdate(update: Update): Promise<void> {
@@ -127,24 +96,36 @@ export async function handleUpdate(update: Update): Promise<void> {
   const member = update.my_chat_member;
   if (member?.chat.type === 'private' && member.new_chat_member.status === 'kicked') {
     if (redisConfigured()) await removeTgSubscriber(String(member.chat.id));
+    await cancelSurvey(String(member.chat.id));
     return;
   }
+
+  // Нажатия на кнопки — пока только в опросе
+  if (update.callback_query) return handleSurveyCallback(update.callback_query);
 
   const message = update.message;
   if (!message || message.chat.type !== 'private') return;
   const chatId = String(message.chat.id);
-  const [command = '', payload = ''] = (message.text ?? '').trim().split(/\s+/, 2);
+  const text = (message.text ?? '').trim();
+  const [command = '', payload = ''] = text.split(/\s+/, 2);
 
   switch (command.toLowerCase()) {
     case '/start':
-      return start(chatId, payload, message.from);
+      return start(chatId, payload);
     case '/stop':
       if (redisConfigured()) await removeTgSubscriber(chatId);
-      return send(chatId, BOT_COPY.stopped);
+      await cancelSurvey(chatId);
+      return send(chatId, BOT_COPY.stopped).then(() => {});
+    case '/opros':
+      return startSurvey(chatId);
     case '/id':
       // Чтобы узнать свой chat id для TELEGRAM_ADMIN_CHAT_ID
-      return send(chatId, `Твой chat id: ${chatId}`);
-    default:
-      return send(chatId, BOT_COPY.idle);
+      return send(chatId, `Твой chat id: ${chatId}`).then(() => {});
+    default: {
+      // Посреди опроса текст — это ответ своими словами
+      if (text && !text.startsWith('/') && (await handleSurveyText(chatId, text))) return;
+      const hint = await surveyAvailable(chatId).catch(() => false);
+      await send(chatId, hint ? `${BOT_COPY.idle}\n\n${BOT_COPY.surveyHint}` : BOT_COPY.idle);
+    }
   }
 }
