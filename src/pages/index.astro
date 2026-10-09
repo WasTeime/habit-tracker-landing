@@ -19,7 +19,7 @@ const waitlist = CONFIG.ctaMode === 'waitlist';
     <Hero />
     <script is:inline>window.__abApply && window.__abApply();</script>
 
-    <section class="script" aria-label="Разговор с Батей">
+    <section class="script" aria-label="Разговор с Тренером">
       <Turn>
         <p class="line line--first">{COPY.intro}</p>
       </Turn>
@@ -63,7 +63,7 @@ const waitlist = CONFIG.ctaMode === 'waitlist';
         <Turn body="reply" class="anim" data-slot="batya" hidden bodyAttrs={{ 'data-slot': 'body' }}>
           <div class="typing" data-slot="typing">
             <span class="typing__dot"></span><span class="typing__dot"></span><span class="typing__dot"></span>
-            <span class="sr-only">Батя печатает…</span>
+            <span class="sr-only">Тренер печатает…</span>
           </div>
         </Turn>
       </template>

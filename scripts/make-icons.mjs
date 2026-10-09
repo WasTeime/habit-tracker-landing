@@ -60,7 +60,7 @@ const og = h(
       height: '100%',
       paddingLeft: 80,
     },
-    h('div', { fontSize: 22, fontWeight: 700, letterSpacing: 2.6, textTransform: 'uppercase', color: C.muted }, 'Батя'),
+    h('div', { fontSize: 22, fontWeight: 700, letterSpacing: 2.6, textTransform: 'uppercase', color: C.muted }, 'Тренер'),
     h(
       'div',
       { fontSize: 66, fontWeight: 800, lineHeight: 1.04, letterSpacing: -1.6 },
@@ -74,7 +74,7 @@ const og = h(
 const ogSvg = await render(og, 1200, 630);
 await sharp(Buffer.from(ogSvg)).png({ compressionLevel: 9, palette: false }).toFile(pub('og.png'));
 
-// ---------- Иконки: лицо Бати из src/assets/batya-wave.webp ----------
+// ---------- Иконки: лицо Тренера из src/assets/batya-wave.webp ----------
 // Кадр — голова целиком: на вкладке иконка 16–32 px, фигура там не читается
 const FACE = { left: 330, top: 60, width: 470, height: 470 };
 // Палитра: мультяшной картинке хватает, а весит в разы меньше
