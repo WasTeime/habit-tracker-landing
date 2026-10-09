@@ -66,7 +66,7 @@ const og = h(
       { fontSize: 66, fontWeight: 800, lineHeight: 1.04, letterSpacing: -1.6 },
       'Давно не можешь прийти к своим целям?',
     ),
-    h('div', { fontSize: 36, fontWeight: 700, color: C.accent }, 'Я знаю секрет.'),
+    h('div', { fontSize: 36, fontWeight: 700, color: C.accent }, 'Я знаю секрет'),
   ),
   { type: 'img', props: { src: poseUri, width: 600, height: 600, style: { position: 'absolute', right: -10, bottom: -40 } } },
 );

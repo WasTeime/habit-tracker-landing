@@ -37,7 +37,7 @@ function initQrDialog(dialog: HTMLDialogElement): () => void {
         box.innerHTML = svg;
       })
       .catch(() => {
-        box.textContent = 'Не получилось нарисовать код — нажми на бейдж стора ниже.';
+        box.textContent = 'Не получилось нарисовать код — нажми на бейдж стора ниже';
       });
   };
 }
