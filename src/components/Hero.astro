@@ -105,7 +105,8 @@ const LAYOUTS = [
       {LAYOUTS.map((l) => (
         <>
           {/* Мягкое белое свечение под буквами — читается и на небе, и на солнце */}
-          <filter id={`hero-glow-${l.name}`} x="-10%" y="-60%" width="120%" height="220%">
+          {/* Запас по краям — от размеров текста: одно короткое слово должно влезть со всем свечением */}
+          <filter id={`hero-glow-${l.name}`} x="-20%" y="-60%" width="140%" height="220%">
             <feMorphology in="SourceAlpha" operator="dilate" radius={l.glow / 4}></feMorphology>
             <feGaussianBlur stdDeviation={l.glow}></feGaussianBlur>
             <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0"></feColorMatrix>
@@ -128,12 +129,18 @@ const LAYOUTS = [
       </g>
     </g>
 
-    {LAYOUTS.map((l) => (
-      <g class={`hero__${l.name}`} font-size={l.word} filter={`url(#hero-glow-${l.name})`}>
-        <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - l.gap} y={l.y} text-anchor="end">{left}</text>
-        <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + l.gap} y={l.y}>{right}</text>
-      </g>
-    ))}
+    {/* Как у вопроса: двигается внешняя группа, свечение — внутри неё. Если фильтр снаружи движущегося,
+        браузер может не перерисовывать анимацию и слова просто возникают на месте */}
+    <g class="hero__word hero__word--l" text-anchor="end">
+      {LAYOUTS.map((l) => (
+        <text class={`hero__${l.name}`} font-size={l.word} x={HEAD.x - HEAD.rx - l.gap} y={l.y} filter={`url(#hero-glow-${l.name})`}>{left}</text>
+      ))}
+    </g>
+    <g class="hero__word hero__word--r">
+      {LAYOUTS.map((l) => (
+        <text class={`hero__${l.name}`} font-size={l.word} x={HEAD.x + HEAD.rx + l.gap} y={l.y} filter={`url(#hero-glow-${l.name})`}>{right}</text>
+      ))}
+    </g>
   </svg>
 
   <h1 class="sr-only" data-copy="heroTitle">{COPY.heroTitle}</h1>

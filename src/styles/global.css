@@ -164,7 +164,8 @@ button {
   }
 }
 
-.hero__q {
+.hero__q,
+.hero__word {
   transform-box: view-box;
 }
 
