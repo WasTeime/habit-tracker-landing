@@ -86,14 +86,14 @@ npm run tg -- broadcast release.txt
 | Что | Куда | Примечание |
 |---|---|---|
 | 3 скрина приложения | `src/assets/screens/1.png`, `2.png`, `3.png` | Порядок по имени: путь привычек, детали привычки, чат. Оригинальный размер скрина iPhone подходит, ужмётся при сборке |
-| Видео 30 сек | `public/media/batya-demo.mp4` | H.264, 1280×720, в пределах 5–8 МБ. Стартует без звука, звук включается кнопкой. По желанию ещё `batya-demo.webm` |
+| Видео 30 сек | `public/media/batya-demo.mp4` | H.264, 1280×720, в пределах 5–8 МБ. Без звука. По желанию ещё `batya-demo.webm` |
 | Постер видео | `public/media/batya-demo-poster.jpg` (или `.webp`) | Первый кадр, 1280×720 |
 | Официальные бейджи | `public/badges/app-store.svg`, `google-play.svg` | Скачать с Apple Marketing Tools и Google Play Badges; подхватятся вместо текстовых кнопок |
 | Политика обработки ПДн | ссылка в `PUBLIC_PRIVACY_URL` | Нужна по 152-ФЗ: на неё ссылаются баннер cookie и галочка согласия в форме почты |
 
 Пока файлов нет, на месте скринов и видео — пустые слоты, как в макете. Ничего в коде менять не надо, достаточно положить файлы и пересобрать.
 
-**Первый экран** — картинка `src/assets/batya-meditate.png` во весь экран (1671×941; для чёткости на телефонах лучше та же картинка в 2–3 раза крупнее). Надписи поверх — SVG в координатах картинки, они держатся за голову Тренера при любом кадрировании. При замене картинки перемерить `HEAD` и `SUN` в `src/components/Hero.astro`. Шрифт надписей — Caveat (`--font-hero` в `global.css`), остальной сайт на Onest.
+**Первый экран** — картинка `src/assets/batya-meditate.png` во весь экран (1671×941; для чёткости на телефонах лучше та же картинка в 2–3 раза крупнее). Надписи поверх — SVG в координатах картинки, они держатся за голову Тренера при любом кадрировании. При замене картинки перемерить `HEAD` и `SUN_Y` в `src/components/Hero.astro`. Шрифт надписей — Unbounded 700 (`--font-hero` в `global.css`), остальной сайт на Onest. Раскладок три, переключаются по пропорциям экрана: шире 13:10 вопрос идёт одной дугой, на планшете и на телефоне — двумя (размеры и дуги — `LAYOUTS` в `Hero.astro`). Порядок анимации держит `src/scripts/hero.ts`: «Я знаю» и «секрет» стартуют, только когда вопрос доиграл.
 
 `og.png` (1200×630), `favicon.ico` (16/32/48), `icon-192.png`, `apple-touch-icon.png` уже лежат в `public/`. Иконки — лицо Тренера из `src/assets/batya-wave.webp`. Перегенерировать: `npm run icons` (скрипт `scripts/make-icons.mjs`, кадр лица — константа `FACE`).
 
@@ -148,7 +148,6 @@ UTM и click id (`yclid`, `fbclid`, `ttclid`, `rb_clickid`, `gclid`) сохра�
 | `screenshot_view` | скрин в кадре / свайп | index |
 | `video_play` | первый старт | autoplay |
 | `video_progress` | 25 / 50 / 75 / 100% | percent |
-| `video_unmute` | включил звук | — |
 | `direction_click` | выбор направления | direction |
 | `tg_click` | кнопка «Позови в Telegram» | — |
 | `waitlist_start` | первый фокус в форме почты | — |
@@ -203,7 +202,7 @@ src/
   pages/api/          telegram (вебхук бота), tg-ref (метки клика), subscribe (форма почты), waitlist.csv и survey.csv (выгрузки)
   server/             telegram (бот), survey (опрос), tgapi (Bot API), waitlist (подписчики), csv (выгрузки), redis (клиент Upstash)
   components/         Hero, Turn (реплика), Screens, DemoVideo, Waitlist (+WaitlistEmail), Cta, StoreBadges, QrDialog, Consent
-  scripts/            analytics, links (ссылки на стор), dialog (разговор по шагам), demo (выбор направления), screens (карусель скринов), video, telegram (кнопка бота), waitlist (форма почты), cta (+QR), engagement (скролл/секции/время), consent
+  scripts/            analytics, links (ссылки на стор), hero (порядок надписей на первом экране), dialog (разговор по шагам), demo (выбор направления), screens (карусель скринов), video, telegram (кнопка бота), waitlist (форма почты), cta (+QR), engagement (скролл/секции/время), consent
   styles/global.css   токены и вся вёрстка; мобильная и десктопная раскладки — два медиазапроса
 public/               og.png, иконки, media/ для видео, badges/ для бейджей
 scripts/make-icons.mjs

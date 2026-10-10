@@ -29,7 +29,7 @@ async function readBody(request: Request): Promise<{ data: Record<string, unknow
 function page(text: string, status: number): Response {
   const html = `<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Тренер</title>
 <body style="margin:0;background:#111827;color:#e8eff8;font:18px/1.5 system-ui,sans-serif"><main style="max-width:480px;margin:0 auto;padding:64px 20px">
-<p style="margin:0 0 24px">${text}</p><a href="/" style="color:#4caf89">← Вернуться</a></main></body></html>`;
+<p style="margin:0 0 24px">${text}</p><a href="/" style="color:#6f9fd8">← Вернуться</a></main></body></html>`;
   return new Response(html, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 

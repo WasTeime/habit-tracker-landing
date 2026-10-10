@@ -8,12 +8,10 @@ export function initVideo(): void {
   if (!root || !video) return;
 
   const playButton = root.querySelector<HTMLButtonElement>('[data-video-play]');
-  const soundButton = root.querySelector<HTMLButtonElement>('[data-video-sound]');
 
   let started = false;
   let startedByViewport = false;
   let pausedByUser = false;
-  let unmuted = false;
   const progressSent = new Set<number>();
 
   const setState = (state: State) => {
@@ -73,20 +71,4 @@ export function initVideo(): void {
   };
   video.addEventListener('click', togglePlay);
   playButton?.addEventListener('click', togglePlay);
-
-  soundButton?.addEventListener('click', () => {
-    const turnOn = video.muted;
-    video.muted = !turnOn;
-    soundButton.setAttribute('aria-pressed', String(turnOn));
-    soundButton.setAttribute('aria-label', turnOn ? 'Выключить звук' : 'Включить звук');
-    if (!turnOn) return;
-    if (!unmuted) {
-      // Первый раз со звуком — с начала, чтобы не начинать с середины фразы
-      unmuted = true;
-      video.currentTime = 0;
-      track('video_unmute');
-    }
-    pausedByUser = false;
-    if (video.paused) play(false);
-  });
 }

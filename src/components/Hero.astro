@@ -6,11 +6,12 @@ import { COPY } from '../content';
 // Картинка во весь экран, поверх — SVG в координатах самой картинки: viewBox = размер исходника,
 // slice + xMidYMin ведут себя как object-fit: cover + object-position: 50% 0, так что надписи
 // держатся за голову Тренера при любом кадрировании.
-// Координаты сняты с исходника 1671×941 — при замене картинки перемерить HEAD и SUN.
+// Координаты сняты с исходника 1671×941 — при замене картинки перемерить HEAD и SUN_Y.
 const W = 1671;
 const H = 941;
 const HEAD = { x: 824, y: 250, rx: 80, ry: 100 };
-const SUN = { x: 830, y: 293 };
+// Центр солнца за головой по вертикали
+const SUN_Y = 293;
 // Шея и плечи — вопрос поднимается из-за них
 const BODY = '745,320 905,320 1050,420 1100,941 545,941 600,420';
 
@@ -22,7 +23,7 @@ function arc(cx: number, cy: number, r: number, deg: number): string {
   return `M${(cx - dx).toFixed(1)} ${y}A${r} ${r} 0 0 1 ${(cx + dx).toFixed(1)} ${y}`;
 }
 
-// На телефоне вопрос — две дуги вокруг головы, длинная половина снаружи
+// В узких раскладках вопрос — две дуги над головой, длинная половина снаружи
 function split(text: string): [string, string] {
   const words = text.split(' ');
   let at = 1;
@@ -38,6 +39,44 @@ const [outer, inner] = split(COPY.heroTitle);
 const cut = COPY.heroSecret.lastIndexOf(' ');
 const left = COPY.heroSecret.slice(0, cut);
 const right = COPY.heroSecret.slice(cut + 1);
+
+// Три раскладки — по пропорциям экрана (переключает global.css): чем больше картинки видно по ширине,
+// тем крупнее надписи. size — вопрос, word — «Я знаю» / «секрет», gap — отступ слов от головы, glow — размытие свечения
+const LAYOUTS = [
+  {
+    // Шире 13:10: одна пологая дуга, концы выше слов
+    name: 'wide',
+    arcs: [arc(HEAD.x, 1400, 1300, 40)],
+    lines: [COPY.heroTitle],
+    size: 41,
+    word: 80,
+    gap: 56,
+    y: 295,
+    glow: 9,
+  },
+  {
+    // Планшет и узкое окно: две дуги, всё крупнее, чем на телефоне
+    name: 'mid',
+    arcs: [arc(W / 2, SUN_Y + 311, 520, 75), arc(W / 2, SUN_Y + 311, 476, 75)],
+    lines: [outer, inner],
+    size: 34,
+    word: 42,
+    gap: 24,
+    y: 290,
+    glow: 6,
+  },
+  {
+    // Телефон: две дуги — центр ниже солнца, чтобы концы не сползали на виски; места у головы мало
+    name: 'narrow',
+    arcs: [arc(W / 2, SUN_Y + 235, 450, 75), arc(W / 2, SUN_Y + 235, 419, 75)],
+    lines: [outer, inner],
+    size: 23,
+    word: 23,
+    gap: 2,
+    y: 284,
+    glow: 4,
+  },
+];
 ---
 
 <section class="hero" data-track-section="hero">
@@ -63,32 +102,38 @@ const right = COPY.heroSecret.slice(cut + 1);
         <ellipse cx={HEAD.x} cy={HEAD.y} rx={HEAD.rx} ry={HEAD.ry} fill="#000"></ellipse>
         <polygon points={BODY} fill="#000"></polygon>
       </mask>
-      <path id="hero-arc" d={arc(HEAD.x, 1100, 1000, 50)}></path>
-      {/* Телефон: две пологие дуги над головой — центр ниже солнца, чтобы концы не сползали на виски */}
-      <path id="hero-arc-out" d={arc(SUN.x, SUN.y + 220, 450, 75)}></path>
-      <path id="hero-arc-in" d={arc(SUN.x, SUN.y + 220, 400, 75)}></path>
+      {LAYOUTS.map((l) => (
+        <>
+          {/* Мягкое белое свечение под буквами — читается и на небе, и на солнце */}
+          <filter id={`hero-glow-${l.name}`} x="-10%" y="-60%" width="120%" height="220%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius={l.glow / 4}></feMorphology>
+            <feGaussianBlur stdDeviation={l.glow}></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0"></feColorMatrix>
+            <feMerge><feMergeNode></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+          </filter>
+          {l.arcs.map((d, i) => <path id={`hero-${l.name}-${i}`} d={d}></path>)}
+        </>
+      ))}
     </defs>
 
     <g mask="url(#hero-behind)">
       <g class="hero__q" style={`transform-origin: ${HEAD.x}px ${HEAD.y}px`}>
-        <text class="hero__wide" text-anchor="middle">
-          <textPath href="#hero-arc" startOffset="50%">{COPY.heroTitle}</textPath>
-        </text>
-        <g class="hero__narrow" text-anchor="middle">
-          <text><textPath href="#hero-arc-out" startOffset="50%">{outer}</textPath></text>
-          <text><textPath href="#hero-arc-in" startOffset="50%">{inner}</textPath></text>
-        </g>
+        {LAYOUTS.map((l) => (
+          <g class={`hero__${l.name}`} font-size={l.size} text-anchor="middle" filter={`url(#hero-glow-${l.name})`}>
+            {l.lines.map((line, i) => (
+              <text><textPath href={`#hero-${l.name}-${i}`} startOffset="50%">{line}</textPath></text>
+            ))}
+          </g>
+        ))}
       </g>
     </g>
 
-    <g class="hero__wide">
-      <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - 24} y="290" text-anchor="end">{left}</text>
-      <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + 24} y="290">{right}</text>
-    </g>
-    <g class="hero__narrow">
-      <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - 6} y="282" text-anchor="end">{left}</text>
-      <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + 6} y="282">{right}</text>
-    </g>
+    {LAYOUTS.map((l) => (
+      <g class={`hero__${l.name}`} font-size={l.word} filter={`url(#hero-glow-${l.name})`}>
+        <text class="hero__word hero__word--l" x={HEAD.x - HEAD.rx - l.gap} y={l.y} text-anchor="end">{left}</text>
+        <text class="hero__word hero__word--r" x={HEAD.x + HEAD.rx + l.gap} y={l.y}>{right}</text>
+      </g>
+    ))}
   </svg>
 
   <h1 class="sr-only" data-copy="heroTitle">{COPY.heroTitle}</h1>

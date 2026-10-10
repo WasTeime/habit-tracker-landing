@@ -1,12 +1,14 @@
 ---
-import '@fontsource/caveat/700.css';
 import '@fontsource/onest/400.css';
 import '@fontsource/onest/600.css';
 import '@fontsource/onest/700.css';
 import '@fontsource/onest/800.css';
-import caveat700 from '@fontsource/caveat/files/caveat-cyrillic-700-normal.woff2?url';
+import '@fontsource/unbounded/700.css';
 import onest700 from '@fontsource/onest/files/onest-cyrillic-700-normal.woff2?url';
 import onest800 from '@fontsource/onest/files/onest-cyrillic-800-normal.woff2?url';
+// Надписи hero: буквы — в кириллическом файле, пробел и «?» — в латинском
+import unbounded700 from '@fontsource/unbounded/files/unbounded-cyrillic-700-normal.woff2?url';
+import unbounded700latin from '@fontsource/unbounded/files/unbounded-latin-700-normal.woff2?url';
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 import { AB_VARIANTS, META } from '../content';
@@ -43,7 +45,8 @@ const ogImage = new URL('/og.png', Astro.site);
     <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Шрифт надписей hero и жирные начертания нужны первому экрану сразу -->
-    <link rel="preload" href={caveat700} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={unbounded700} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={unbounded700latin} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={onest800} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={onest700} as="font" type="font/woff2" crossorigin />
 

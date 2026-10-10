@@ -3,21 +3,24 @@
   --bg: #111827;
   --bg-2: #16202d;
   --bubble: #1f2a3c;
-  --bubble-you: #2b3a52;
+  /* Свои реплики — синие, как исходящие в мессенджере, тем же цветом, что и акцент */
+  --bubble-you: var(--accent);
   --border: #33415a;
   --text: #e8eff8;
   --text-2: #c7d1de;
   --text-3: #a9b7c9;
-  --you: #8fa3bc;
   --muted: #6e8098;
   --muted-2: #5a6a7e;
-  --accent: #4caf89;
-  --on-accent: #0b1220;
+  /* Синий — заливки кнопок и свои реплики. На тёмном фоне он плохо читается текстом и линией,
+     поэтому для текста, рамок и обводок — тот же синий светлее */
+  --accent: #2c5f9e;
+  --accent-text: #6f9fd8;
+  --on-accent: #fff;
   --danger: #ef8a7a;
 
   --font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-  /* Надписи на картинке hero — рукописные, как будто Тренер написал маркером */
-  --font-hero: 'Caveat', 'Onest', cursive;
+  /* Надписи на картинке hero — широкий акцидентный гротеск */
+  --font-hero: 'Unbounded', 'Onest', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -68,7 +71,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-text);
   outline-offset: 3px;
 }
 
@@ -132,28 +135,37 @@ button {
   fill: var(--bg);
   font-family: var(--font-hero);
   font-weight: 700;
-  paint-order: stroke;
-  stroke: rgb(255 255 255 / 0.75);
-  stroke-linejoin: round;
 }
 
-.hero__wide {
-  font-size: 76px;
-  stroke-width: 9px;
-}
-
-.hero__wide .hero__word {
-  font-size: 104px;
-  stroke-width: 12px;
-}
-
+/* Раскладка надписей — по пропорциям экрана, а не по ширине: что влезает, зависит от того,
+   сколько картинки видно. Размеры и дуги — LAYOUTS в Hero.astro */
+.hero__mid,
 .hero__narrow {
-  font-size: 40px;
-  stroke-width: 6px;
+  display: none;
 }
 
-.hero__narrow .hero__word {
-  font-size: 38px;
+@media not all and (min-aspect-ratio: 13/10) {
+  .hero__wide {
+    display: none;
+  }
+
+  .hero__mid {
+    display: inline;
+  }
+}
+
+@media not all and (min-aspect-ratio: 3/4) {
+  .hero__mid {
+    display: none;
+  }
+
+  .hero__narrow {
+    display: inline;
+  }
+}
+
+.hero__q {
+  transform-box: view-box;
 }
 
 .hero__next {
@@ -171,33 +183,48 @@ button {
   color: #fff;
 }
 
-/* Вопрос выплывает из-за головы Тренера, потом слева «Я знаю», справа «секрет» */
+/* Сначала вопрос выплывает из-за головы Тренера, потом слева «Я знаю», справа «секрет».
+   Порядок держит hero.ts через data-play: ответ стартует, когда вопрос доиграл, а не по таймеру.
+   Пока скрипт не стартовал — надписей нет; если он так и не дошёл, через 3 с они просто проявятся */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 
-  .hero__q {
-    transform-box: view-box;
-    animation: hero-emerge 1.4s cubic-bezier(0.3, 0.6, 0.2, 1) 0.3s both;
+  .js .hero:not([data-play]) .hero__q,
+  .js .hero:not([data-play]) .hero__word {
+    animation: hero-fade 0.6s 3s both;
   }
 
-  .hero__word {
-    animation: 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  .hero[data-play] .hero__q {
+    animation: hero-emerge 1.1s cubic-bezier(0.25, 0.7, 0.25, 1) both;
   }
 
-  .hero__word--l {
+  .hero[data-play='question'] .hero__word {
+    opacity: 0;
+  }
+
+  .hero[data-play='answer'] .hero__word {
+    animation: 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.35s both;
+  }
+
+  .hero[data-play='answer'] .hero__word--l {
     animation-name: hero-from-left;
-    animation-delay: 1.6s;
   }
 
-  .hero__word--r {
+  .hero[data-play='answer'] .hero__word--r {
     animation-name: hero-from-right;
-    animation-delay: 2s;
+    animation-delay: 0.75s;
   }
 
-  .hero__next {
-    animation: hero-nudge 2.4s ease-in-out 2.6s infinite;
+  .hero[data-play='answer'] .hero__next {
+    animation: hero-nudge 2.4s ease-in-out 1.6s infinite;
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
   }
 }
 
@@ -274,7 +301,7 @@ html:not(.js) .ask {
   width: 100%;
   height: 100%;
   padding: 16px;
-  border: 1px dashed var(--bubble-you);
+  border: 1px dashed var(--border);
   border-radius: inherit;
   background: var(--bg-2);
   color: var(--muted-2);
@@ -334,7 +361,7 @@ html:not(.js) .screens__dots {
 
 .screens__dot[aria-current='true']::before {
   width: 20px;
-  background: var(--accent);
+  background: var(--accent-text);
 }
 
 .video {
@@ -351,8 +378,7 @@ html:not(.js) .screens__dots {
   cursor: pointer;
 }
 
-.video__play,
-.video__sound {
+.video__play {
   position: absolute;
   display: grid;
   place-items: center;
@@ -367,8 +393,7 @@ html:not(.js) .screens__dots {
   transition: background-color 0.15s;
 }
 
-.video__play:hover,
-.video__sound:hover {
+.video__play:hover {
   background: rgb(11 18 32 / 0.82);
 }
 
@@ -390,32 +415,15 @@ html:not(.js) .screens__dots {
   display: grid;
 }
 
-.video__sound {
-  right: 12px;
-  bottom: 12px;
-  width: 40px;
-  height: 40px;
-}
-
-.video__sound svg {
-  width: 22px;
-  height: 22px;
-}
-
-.video__sound[aria-pressed='false'] .video__icon-on,
-.video__sound[aria-pressed='true'] .video__icon-off {
-  display: none;
-}
-
 .chips {
   display: flex;
   flex-wrap: wrap;
 }
 
 .chip {
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-text);
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   line-height: 1.5;
   cursor: pointer;
@@ -426,12 +434,14 @@ html:not(.js) .screens__dots {
 }
 
 .chip[aria-pressed='true'] {
+  border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
 }
 
 @media (hover: hover) {
   .chip:hover {
+    border-color: var(--accent);
     background: var(--accent);
     color: var(--on-accent);
   }
@@ -529,8 +539,8 @@ html:not(.js) .screens__dots {
 
 .waitlist__input:focus-visible {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(76 175 137 / 0.25);
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 3px rgb(111 159 216 / 0.25);
 }
 
 .waitlist__input[aria-invalid='true'] {
@@ -658,10 +668,6 @@ html:not(.js) .screens__dots {
 /* ============ Мобильный 1c (< 1024) ============ */
 
 @media (max-width: 1023.98px) {
-  .hero__wide {
-    display: none;
-  }
-
   /* Пузыри Тренера */
   .turn--batya .line,
   .turn--batya .typing {
@@ -686,12 +692,10 @@ html:not(.js) .screens__dots {
     padding: 12px 16px;
     border-radius: 18px 18px 4px 18px;
     background: var(--bubble-you);
-    color: var(--text-2);
+    color: var(--text);
   }
 
   .turn--you .line--picked {
-    background: var(--accent);
-    color: var(--on-accent);
     font-weight: 600;
   }
 
@@ -847,10 +851,6 @@ html:not(.js) .screens__dots {
     font-size: 18px;
   }
 
-  .hero__narrow {
-    display: none;
-  }
-
   .script {
     display: flex;
     flex-direction: column;
@@ -875,7 +875,7 @@ html:not(.js) .screens__dots {
   }
 
   .turn--batya .turn__who {
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   .turn--you .turn__who {
@@ -907,9 +907,13 @@ html:not(.js) .screens__dots {
     color: var(--text-2);
   }
 
+  /* Свои реплики и на десктопе — синим пузырём */
   .turn--you .line {
-    color: var(--you);
-    font-style: italic;
+    width: fit-content;
+    padding: 10px 24px;
+    border-radius: 24px 24px 24px 6px;
+    background: var(--bubble-you);
+    color: var(--text);
   }
 
   .typing {
@@ -1069,7 +1073,7 @@ html:not(.js) .screens__dots {
   padding: 14px;
   border-radius: 16px;
   background: #fff;
-  color: var(--on-accent);
+  color: var(--bg);
   font-size: 13px;
 }
 
@@ -1116,7 +1120,7 @@ html:not(.js) .screens__dots {
   max-width: 560px;
   margin: 0 auto;
   padding: 14px 16px;
-  border: 1px solid var(--bubble-you);
+  border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--bg-2);
   box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
